@@ -7,15 +7,17 @@ class TDHandler:
 
     def __init__(self, c: Config) -> None:
         self.api = todoist_api_python.api.TodoistAPI(c.todoist_api_key)
+        self.projects = []
+        self.tasks = []
 
     def get_projects(self) -> str:
-        # TODO: Finish this
         result = []
         try:
             projects = self.api.get_projects()
         except Exception as error:
             print(error)
         for p in projects:
+            self.projects.append(p)
             text =  f'''
             Name: {p.name}, Id: {p.id}
             '''
@@ -30,6 +32,9 @@ class TDHandler:
         except Exception as error:
             print(error)
         for t in tasks:
+            for p in self.projects:
+                if t.project_id == p.id and p.is_shared:
+                    continue
             text =  f'''
 Name: {t.content}, 
 Order: {t.order}, Parent: {t.parent_id}, 
