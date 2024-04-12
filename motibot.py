@@ -18,26 +18,19 @@ class Motibot:
     def __init__(self, c) -> None:
         self.config = c
     
-    async def check_in(self):
+    def check_in(self) -> str:
         t = TDHandler(self.config)
         report = t.get_report()
         response = self.openai_prompt(report).choices[0].message.content
-        d = DiscordBot(self.config)
-        await d.send_message_to_discord(
-            message=response,
-        )
+        return response
 
 
     # Mock function to process tasks and create a prompt for OpenAI
     def openai_prompt(self, report):
         prompt = f'''
-        You are a tough no bullshit motivator reviewing project and tasks lists for the user. 
-
-        Summarize current task status, note any accomplishments, and 
-        make it clear what are the most important next actions.
-
-        Ignore shared projects and menial recurring tasks unless they're 
-        egregiously overdue.
+        Below is a report of information. Analyze it and make a short
+        and snarky comment in the form of a drill sergeant focusing on
+        criticism and motivation.
         '''
 
         client = OpenAI(api_key=self.config.openai_api_key)
@@ -48,15 +41,20 @@ class Motibot:
                 {"role": "system", "content": prompt},
                 {"role": "system", "content": report}
             ],
+            max_tokens=300
         )
         return response
 
 
 # Main function flow
-async def main():
+def main():
     c = Config()
     m = Motibot(c)
-    await m.check_in()
+    response = m.check_in()
+    d = DiscordBot(c, response)
+    d.run()
+    
+    
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

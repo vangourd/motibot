@@ -1,25 +1,23 @@
 import discord
 from config import Config
+import discord
+
 
 class DiscordBot:
 
-    def __init__(self, c: Config) -> None:
+    def __init__(self, c: Config, m: str):
         self.bot_token = c.discord_bot_token
         self.discord_target_user = c.discord_target_user
+        self.client = discord.Client(intents=discord.Intents.default())
+        self.message = m
 
+        @self.client.event
+        async def on_ready():
+            print(f"Logged in as {self.client.user}")
+            user = await self.client.fetch_user(self.discord_target_user)
+            await user.send(m)
+            await self.client.close()  # Close after sending message, or remove if the bot should stay online
 
-    async def send_message_to_discord(self, message):
-        print("Sending message to Discord...")
-        intents = discord.Intents.default()
-        client = discord.Client(intents=intents)
-
-        try:
-            await client.start(self.bot_token)
-            user = client.fetch_user(self.discord_target_user)
-            print(f"Found user {user}")
-            await user.send(message)
-            print("Message sent successfully")
-        except Exception as e:
-            print(f"Error sending message to  Discord {e}")
-        finally:
-            await client.close()
+        
+    def run(self):
+        self.client.run(self.bot_token)
