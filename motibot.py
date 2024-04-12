@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
-import discord
+import chatbot
 import os
 import requests
+import discord
+import asyncio
 from openai import OpenAI
 
 # modules
 from todoist import TDHandler
 from config import Config
+from chatbot import DiscordBot
 
 
 class Motibot:
@@ -15,10 +18,14 @@ class Motibot:
     def __init__(self, c) -> None:
         self.config = c
     
-    def check_in(self):
+    async def check_in(self):
         t = TDHandler(self.config)
         report = t.get_report()
-        print(self.openai_prompt(report).choices[0].message.content)
+        response = self.openai_prompt(report).choices[0].message.content
+        d = DiscordBot(self.config)
+        await d.send_message_to_discord(
+            message=response,
+        )
 
 
     # Mock function to process tasks and create a prompt for OpenAI
@@ -45,28 +52,11 @@ class Motibot:
         return response
 
 
-    # Mock function to send a message to Discord
-    async def send_message_to_discord(self, message):
-        print("Sending message to Discord...")
-        # Initialize Discord client and send message
-        client = discord.Client()
-
-        @client.event
-        async def on_ready():
-            # Logic to send message
-            print(f'Logged in as {client.user}')
-            # Replace 'channel_id' with actual Discord channel ID
-            channel = client.get_channel(channel_id)
-            await channel.send(message)
-            await client.close()
-
-        await client.start(discord_token)
-
 # Main function flow
-def main():
+async def main():
     c = Config()
     m = Motibot(c)
-    m.check_in()
+    await m.check_in()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
